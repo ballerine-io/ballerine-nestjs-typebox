@@ -43,7 +43,7 @@ export type TUnionOfString<T extends string[], Acc extends TSchema[] = []> = T e
     ? TUnionOfString<R, [...Acc, TLiteral<L>]>
     : Acc;
 
-export const LiteralUnion = <const T extends string[]>(values: [...T], options?: SchemaOptions): TUnion<TUnionOfString<T>> => {
+export const LiteralUnion = <T extends string[]>(values: [...T], options?: SchemaOptions): TUnion<TUnionOfString<T>> => {
     return Type.Union(
         values.map(value => Type.Literal(value)),
         options
