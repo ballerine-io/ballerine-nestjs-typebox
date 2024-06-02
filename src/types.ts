@@ -1,7 +1,7 @@
 import type { PipeTransform, Type } from '@nestjs/common';
 import { ApiOperationOptions } from '@nestjs/swagger';
 import type { Static, TComposite, TOmit, TPartial, TPick, TSchema } from '@sinclair/typebox';
-import type { TypeCheck } from '@sinclair/typebox/compiler';
+import { ValidateFunction } from 'ajv';
 
 export type AllKeys<T> = T extends unknown ? Exclude<keyof T, symbol> : never;
 
@@ -29,7 +29,7 @@ export interface HttpEndpointDecoratorConfig<
 export interface SchemaValidator<T extends TSchema = TSchema> {
     schema: T;
     name: string;
-    check: TypeCheck<T>['Check'];
+    check: ValidateFunction;
     validate(data: Obj | Obj[]): Static<T>;
 }
 export interface ValidatorConfigBase {

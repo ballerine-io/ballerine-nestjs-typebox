@@ -5,9 +5,9 @@ import { extendArrayMetadata } from '@nestjs/common/utils/extend-metadata.util.j
 import { ApiBody, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { DECORATORS } from '@nestjs/swagger/dist/constants.js';
 import { Static, TSchema, Type, TypeGuard } from '@sinclair/typebox';
-import { TypeCompiler } from '@sinclair/typebox/compiler';
+import { Ajv } from 'ajv';
 
-import { TypeboxValidationException } from './exceptions.js';
+import { AjvValidationException } from './exceptions.js';
 import { TypeboxTransformInterceptor } from './interceptors.js';
 import type {
     HttpEndpointDecoratorConfig,
@@ -21,6 +21,8 @@ import type {
     ValidatorConfig,
 } from './types.js';
 import { capitalize, coerceType, isObj } from './util.js';
+
+const ajv = new Ajv();
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isSchemaValidator(type: any): type is SchemaValidator {
@@ -42,12 +44,12 @@ export function buildSchemaValidator(config: SchemaValidatorConfig): SchemaValid
         throw new Error(`Validator "${name}" expects a TypeBox schema.`);
     }
 
-    const checker = TypeCompiler.Compile(schema);
+    const check = ajv.compile(schema);
 
     return {
         schema,
         name,
-        check: checker.Check,
+        check,
         validate(dataOrArray: unknown) {
             let jsonSchema: Obj;
             let processedDataOrArray = dataOrArray;
@@ -101,8 +103,8 @@ export function buildSchemaValidator(config: SchemaValidatorConfig): SchemaValid
                 return;
             }
 
-            if (checker.Check(processedDataOrArray)) return processedDataOrArray;
-            throw new TypeboxValidationException(type, checker.Errors(processedDataOrArray));
+            if (check(processedDataOrArray)) return processedDataOrArray;
+            throw new AjvValidationException(type, check.errors);
         },
     };
 }
