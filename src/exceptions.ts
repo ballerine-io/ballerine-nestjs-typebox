@@ -22,7 +22,7 @@ export class AjvValidationException<TRequestSchema extends TSchema, TResponseSch
 
         super({
             statusCode: HttpStatus.BAD_REQUEST,
-            message: `Validation failed (${type})`,
+            message: `Validation error (${type})`,
             errors: topLevelErrors,
         });
     }
