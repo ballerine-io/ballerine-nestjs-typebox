@@ -1,7 +1,7 @@
 import type { PipeTransform, Type } from '@nestjs/common';
 import { ApiOperationOptions } from '@nestjs/swagger';
 import type { Static, TComposite, TOmit, TPartial, TPick, TSchema } from '@sinclair/typebox';
-import type { TypeCheck } from '@sinclair/typebox/compiler';
+import { ValidateFunction } from 'ajv';
 
 export type AllKeys<T> = T extends unknown ? Exclude<keyof T, symbol> : never;
 
@@ -16,68 +16,71 @@ export type MethodDecorator<T extends Function = any> = (
 ) => TypedPropertyDescriptor<T> | void;
 
 export interface HttpEndpointDecoratorConfig<
-    S extends TSchema = TSchema,
-    ResponseConfig extends ResponseValidatorConfig<S> = ResponseValidatorConfig<S>,
+    TTSchema extends TSchema,
+    ResponseConfig extends ResponseValidatorConfig<TTSchema> = ResponseValidatorConfig<TTSchema>,
     RequestConfigs extends RequestValidatorConfig[] = RequestValidatorConfig[],
 > extends Omit<ApiOperationOptions, 'requestBody' | 'parameters'> {
     method: 'GET' | 'POST' | 'PATCH' | 'DELETE' | 'PUT';
     responseCode?: number;
     path?: string;
-    validate?: ValidatorConfig<S, ResponseConfig, RequestConfigs>;
+    validate?: ValidatorConfig<TTSchema, ResponseConfig, RequestConfigs>;
 }
 
-export interface SchemaValidator<T extends TSchema = TSchema> {
-    schema: T;
+export interface SchemaValidator<TTSchema extends TSchema> {
+    schema: TTSchema;
     name: string;
-    check: TypeCheck<T>['Check'];
-    validate(data: Obj | Obj[]): Static<T>;
+    check: ValidateFunction<Static<TTSchema>>;
+    validate(data: Obj | Obj[]): Static<TTSchema>;
 }
-export interface ValidatorConfigBase {
-    schema?: TSchema;
+export interface ValidatorConfigBase<TTSchema extends TSchema> {
+    schema?: TTSchema;
     coerceTypes?: boolean;
     stripUnknownProps?: boolean;
     name?: string;
     required?: boolean;
     pipes?: (PipeTransform | Type<PipeTransform>)[];
 }
-export interface ResponseValidatorConfig<T extends TSchema = TSchema> extends ValidatorConfigBase {
-    schema: T;
+export interface ResponseValidatorConfig<TTSchema extends TSchema> extends ValidatorConfigBase<TTSchema> {
+    schema: TTSchema;
     type?: 'response';
     responseCode?: number;
     required?: true;
     pipes?: never;
 }
 
-export interface ParamValidatorConfig extends ValidatorConfigBase {
-    schema?: TSchema;
+export interface ParamValidatorConfig<TTSchema extends TSchema> extends ValidatorConfigBase<TTSchema> {
+    schema?: TTSchema;
     type: 'param';
     name: string;
     stripUnknownProps?: never;
 }
 
-export interface QueryValidatorConfig extends ValidatorConfigBase {
-    schema?: TSchema;
+export interface QueryValidatorConfig<TTSchema extends TSchema> extends ValidatorConfigBase<TTSchema> {
+    schema?: TTSchema;
     type: 'query';
     name: string;
     stripUnknownProps?: never;
 }
 
-export interface BodyValidatorConfig extends ValidatorConfigBase {
-    schema: TSchema;
+export interface BodyValidatorConfig<TTSchema extends TSchema> extends ValidatorConfigBase<TTSchema> {
+    schema: TTSchema;
     type: 'body';
 }
 
-export type RequestValidatorConfig = ParamValidatorConfig | QueryValidatorConfig | BodyValidatorConfig;
-export type SchemaValidatorConfig = RequestValidatorConfig | ResponseValidatorConfig;
+export type RequestValidatorConfig<TTSchema extends TSchema> =
+    | ParamValidatorConfig<TTSchema>
+    | QueryValidatorConfig<TTSchema>
+    | BodyValidatorConfig<TTSchema>;
+export type SchemaValidatorConfig<TTSchema extends TSchema> = RequestValidatorConfig<TTSchema> | ResponseValidatorConfig<TTSchema>;
 
 export type ValidatorType = NonNullable<SchemaValidatorConfig['type']>;
 
 export interface ValidatorConfig<
-    S extends TSchema,
-    ResponseConfig extends ResponseValidatorConfig<S>,
+    TTSchema extends TSchema,
+    ResponseConfig extends ResponseValidatorConfig<TTSchema>,
     RequestConfigs extends RequestValidatorConfig[],
 > {
-    response?: S | ResponseConfig;
+    response?: TTSchema | ResponseConfig;
     request?: [...RequestConfigs];
 }
 
@@ -91,4 +94,6 @@ export type RequestConfigsToTypes<RequestConfigs extends RequestValidatorConfig[
           : string;
 };
 
-export type TPartialSome<T extends TSchema, K extends PropertyKey[]> = TComposite<[TOmit<T, K>, TPartial<TPick<T, K>>]>;
+export type TPartialSome<TTSchema extends TSchema, K extends PropertyKey[]> = TComposite<
+    [TOmit<TTSchema, K>, TPartial<TPick<TTSchema, K>>]
+>;

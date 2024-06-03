@@ -1,19 +1,22 @@
 import { BadRequestException, HttpStatus } from '@nestjs/common';
-import { ValueError, ValueErrorIterator, ValueErrorType } from '@sinclair/typebox/errors';
+import { ErrorObject } from 'ajv';
 
 import type { ValidatorType } from './types.js';
 
-export class TypeboxValidationException extends BadRequestException {
-    constructor(type: ValidatorType, errors: ValueErrorIterator) {
-        const topLevelErrors: ValueError[] = [];
+export class AjvValidationException extends BadRequestException {
+    constructor(type: ValidatorType, errors: Array<ErrorObject> | null | undefined) {
+        const topLevelErrors: ErrorObject[] = [];
         const unionPaths: string[] = [];
-        for (const error of errors) {
-            // don't deeply traverse union errors to reduce error noise
-            if (unionPaths.some(path => error.path.includes(path))) continue;
-            if (error.type === ValueErrorType.Union) {
-                unionPaths.push(error.path);
+
+        if (errors) {
+            for (const error of errors) {
+                // don't deeply traverse union errors to reduce error noise
+                if (unionPaths.some(path => error.instancePath.includes(path))) continue;
+                if (error.keyword === 'oneOf' || error.keyword === 'anyOf') {
+                    unionPaths.push(error.instancePath);
+                }
+                topLevelErrors.push(error);
             }
-            topLevelErrors.push(error);
         }
 
         super({
