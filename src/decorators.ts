@@ -29,9 +29,14 @@ export function isSchemaValidator(type: any): type is SchemaValidator {
     return type && typeof type === 'object' && typeof type.validate === 'function';
 }
 
-export function buildSchemaValidator(config: SchemaValidatorConfig): SchemaValidator {
-    const { type, schema, coerceTypes, stripUnknownProps, name, required } = config;
-
+export function buildSchemaValidator<TTSchema extends TSchema>({
+    type,
+    schema,
+    coerceTypes,
+    stripUnknownProps,
+    name,
+    required,
+}: SchemaValidatorConfig<TTSchema>): SchemaValidator<TTSchema> {
     if (!type) {
         throw new Error('Validator missing "type".');
     }
@@ -44,7 +49,7 @@ export function buildSchemaValidator(config: SchemaValidatorConfig): SchemaValid
         throw new Error(`Validator "${name}" expects a TypeBox schema.`);
     }
 
-    const check = ajv.compile(schema);
+    const check = ajv.compile<Static<TTSchema>>(schema);
 
     return {
         schema,
