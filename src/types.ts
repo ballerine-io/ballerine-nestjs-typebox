@@ -16,7 +16,7 @@ export type MethodDecorator<T extends Function = any> = (
 ) => TypedPropertyDescriptor<T> | void;
 
 export interface HttpEndpointDecoratorConfig<
-    TTSchema extends TSchema = TSchema,
+    TTSchema extends TSchema,
     ResponseConfig extends ResponseValidatorConfig<TTSchema> = ResponseValidatorConfig<TTSchema>,
     RequestConfigs extends RequestValidatorConfig[] = RequestValidatorConfig[],
 > extends Omit<ApiOperationOptions, 'requestBody' | 'parameters'> {
@@ -26,7 +26,7 @@ export interface HttpEndpointDecoratorConfig<
     validate?: ValidatorConfig<TTSchema, ResponseConfig, RequestConfigs>;
 }
 
-export interface SchemaValidator<TTSchema extends TSchema = TSchema> {
+export interface SchemaValidator<TTSchema extends TSchema> {
     schema: TTSchema;
     name: string;
     check: ValidateFunction<Static<TTSchema>>;
@@ -40,7 +40,7 @@ export interface ValidatorConfigBase<TTSchema extends TSchema> {
     required?: boolean;
     pipes?: (PipeTransform | Type<PipeTransform>)[];
 }
-export interface ResponseValidatorConfig<TTSchema extends TSchema = TSchema> extends ValidatorConfigBase<TTSchema> {
+export interface ResponseValidatorConfig<TTSchema extends TSchema> extends ValidatorConfigBase<TTSchema> {
     schema: TTSchema;
     type?: 'response';
     responseCode?: number;
@@ -48,32 +48,30 @@ export interface ResponseValidatorConfig<TTSchema extends TSchema = TSchema> ext
     pipes?: never;
 }
 
-export interface ParamValidatorConfig<TTSchema extends TSchema = TSchema> extends ValidatorConfigBase<TTSchema> {
+export interface ParamValidatorConfig<TTSchema extends TSchema> extends ValidatorConfigBase<TTSchema> {
     schema?: TTSchema;
     type: 'param';
     name: string;
     stripUnknownProps?: never;
 }
 
-export interface QueryValidatorConfig<TTSchema extends TSchema = TSchema> extends ValidatorConfigBase<TTSchema> {
+export interface QueryValidatorConfig<TTSchema extends TSchema> extends ValidatorConfigBase<TTSchema> {
     schema?: TTSchema;
     type: 'query';
     name: string;
     stripUnknownProps?: never;
 }
 
-export interface BodyValidatorConfig<TTSchema extends TSchema = TSchema> extends ValidatorConfigBase<TTSchema> {
+export interface BodyValidatorConfig<TTSchema extends TSchema> extends ValidatorConfigBase<TTSchema> {
     schema: TTSchema;
     type: 'body';
 }
 
-export type RequestValidatorConfig<TTSchema extends TSchema = TSchema> =
+export type RequestValidatorConfig<TTSchema extends TSchema> =
     | ParamValidatorConfig<TTSchema>
     | QueryValidatorConfig<TTSchema>
     | BodyValidatorConfig<TTSchema>;
-export type SchemaValidatorConfig<TTSchema extends TSchema = TSchema> =
-    | RequestValidatorConfig<TTSchema>
-    | ResponseValidatorConfig<TTSchema>;
+export type SchemaValidatorConfig<TTSchema extends TSchema> = RequestValidatorConfig<TTSchema> | ResponseValidatorConfig<TTSchema>;
 
 export type ValidatorType = NonNullable<SchemaValidatorConfig['type']>;
 

@@ -6,6 +6,7 @@ import { ApiBody, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { DECORATORS } from '@nestjs/swagger/dist/constants.js';
 import { Static, TSchema, Type, TypeGuard } from '@sinclair/typebox';
 import { Ajv } from 'ajv';
+import fastUri from 'fast-uri';
 
 import { AjvValidationException } from './exceptions.js';
 import { TypeboxTransformInterceptor } from './interceptors.js';
@@ -22,7 +23,16 @@ import type {
 } from './types.js';
 import { capitalize, coerceType, isObj } from './util.js';
 
-const ajv = new Ajv();
+const ajv = new Ajv({
+    coerceTypes: 'array',
+    useDefaults: true,
+    removeAdditional: true,
+    uriResolver: fastUri,
+    addUsedSchema: false,
+    // Explicitly set allErrors to `false`.
+    // When set to `true`, a DoS attack is possible.
+    allErrors: false,
+});
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isSchemaValidator(type: any): type is SchemaValidator {
