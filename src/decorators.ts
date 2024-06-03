@@ -34,19 +34,21 @@ const ajv = new Ajv({
     allErrors: false,
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isSchemaValidator(type: any): type is SchemaValidator {
+export function isSchemaValidator<TRequestSchema extends TSchema, TResponseSchema extends TSchema>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    type: any
+): type is SchemaValidator<TRequestSchema, TResponseSchema> {
     return type && typeof type === 'object' && typeof type.validate === 'function';
 }
 
-export function buildSchemaValidator<TTSchema extends TSchema>({
+export function buildSchemaValidator<TRequestSchema extends TSchema, TResponseSchema extends TSchema>({
     type,
     schema,
     coerceTypes,
     stripUnknownProps,
     name,
     required,
-}: SchemaValidatorConfig<TTSchema>): SchemaValidator<TTSchema> {
+}: SchemaValidatorConfig<TRequestSchema, TResponseSchema>): SchemaValidator<TRequestSchema, TResponseSchema> {
     if (!type) {
         throw new Error('Validator missing "type".');
     }
@@ -59,7 +61,7 @@ export function buildSchemaValidator<TTSchema extends TSchema>({
         throw new Error(`Validator "${name}" expects a TypeBox schema.`);
     }
 
-    const check = ajv.compile<Static<TTSchema>>(schema);
+    const check = ajv.compile<Static<TRequestSchema | TResponseSchema>>(schema);
 
     return {
         schema,
@@ -119,20 +121,23 @@ export function buildSchemaValidator<TTSchema extends TSchema>({
             }
 
             if (check(processedDataOrArray)) return processedDataOrArray;
-            throw new AjvValidationException(type, check.errors);
+            throw new AjvValidationException<TRequestSchema, TResponseSchema>(type, check.errors);
         },
     };
 }
 
 export function Validate<
-    T extends TSchema,
-    ResponseValidator extends ResponseValidatorConfig<T>,
-    RequestValidators extends RequestValidatorConfig[],
+    TRequestSchema extends TSchema,
+    TResponseSchema extends TSchema,
+    ResponseValidator extends ResponseValidatorConfig<TResponseSchema>,
+    RequestValidators extends RequestValidatorConfig<TRequestSchema>[],
     MethodDecoratorType extends (
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...args: [...RequestConfigsToTypes<RequestValidators>, ...any[]]
-    ) => Promise<Static<ResponseValidator['schema']>> | Static<ResponseValidator['schema']>,
->(validatorConfig: ValidatorConfig<T, ResponseValidator, RequestValidators>): MethodDecorator<MethodDecoratorType> {
+        ...args: [...RequestConfigsToTypes<TRequestSchema, RequestValidators>, ...any[]]
+    ) => Promise<Static<ResponseValidator['schema']>>,
+>(
+    validatorConfig: ValidatorConfig<TRequestSchema, TResponseSchema, ResponseValidator, RequestValidators>
+): MethodDecorator<MethodDecoratorType> {
     return (target, key, descriptor) => {
         let args = Reflect.getMetadata(ROUTE_ARGS_METADATA, target.constructor, key) ?? {};
 
@@ -144,7 +149,7 @@ export function Validate<
         const methodName = capitalize(String(key));
 
         if (responseValidatorConfig) {
-            const validatorConfig: ResponseValidatorConfig = TypeGuard.IsSchema(responseValidatorConfig)
+            const validatorConfig: ResponseValidatorConfig<TResponseSchema> = TypeGuard.IsSchema(responseValidatorConfig)
                 ? { schema: responseValidatorConfig }
                 : responseValidatorConfig;
 
@@ -166,7 +171,10 @@ export function Validate<
             switch (validatorConfig.type) {
                 case 'body': {
                     const { required = true, name = `${methodName}Body`, pipes = [], ...config } = validatorConfig;
-                    const validator = buildSchemaValidator({ ...config, name, required } as SchemaValidatorConfig);
+                    const validator = buildSchemaValidator({ ...config, name, required } as SchemaValidatorConfig<
+                        TRequestSchema,
+                        TResponseSchema
+                    >);
                     const validatorPipe: PipeTransform = { transform: value => validator.validate(value) };
 
                     args = assignMetadata(args, RouteParamtypes.BODY, index, undefined, ...pipes, validatorPipe);
@@ -180,7 +188,12 @@ export function Validate<
 
                 case 'param': {
                     const { required = true, coerceTypes = true, schema = Type.String(), pipes = [], ...config } = validatorConfig;
-                    const validator = buildSchemaValidator({ ...config, coerceTypes, required, schema } as SchemaValidatorConfig);
+                    const validator = buildSchemaValidator({
+                        ...config,
+                        coerceTypes,
+                        required,
+                        schema,
+                    } as SchemaValidatorConfig<TRequestSchema, TResponseSchema>);
                     const validatorPipe: PipeTransform = { transform: value => validator.validate(value) };
 
                     args = assignMetadata(args, RouteParamtypes.PARAM, index, validatorConfig.name, ...pipes, validatorPipe);
@@ -192,7 +205,12 @@ export function Validate<
 
                 case 'query': {
                     const { required = false, coerceTypes = true, schema = Type.String(), pipes = [], ...config } = validatorConfig;
-                    const validator = buildSchemaValidator({ ...config, coerceTypes, required, schema } as SchemaValidatorConfig);
+                    const validator = buildSchemaValidator({
+                        ...config,
+                        coerceTypes,
+                        required,
+                        schema,
+                    } as SchemaValidatorConfig<TRequestSchema, TResponseSchema>);
                     const validatorPipe: PipeTransform = { transform: value => validator.validate(value) };
 
                     args = assignMetadata(args, RouteParamtypes.QUERY, index, validatorConfig.name, ...pipes, validatorPipe);
@@ -215,15 +233,16 @@ const nestHttpDecoratorMap = {
 };
 
 export const HttpEndpoint = <
-    S extends TSchema,
-    ResponseConfig extends Omit<ResponseValidatorConfig<S>, 'responseCode'>,
-    RequestConfigs extends RequestValidatorConfig[],
+    TRequestSchema extends TSchema,
+    TResponseSchema extends TSchema,
+    ResponseConfig extends Omit<ResponseValidatorConfig<TResponseSchema>, 'responseCode'>,
+    RequestConfigs extends RequestValidatorConfig<TRequestSchema>[],
     MethodDecoratorType extends (
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...args: [...RequestConfigsToTypes<RequestConfigs>, ...any[]]
-    ) => Promise<Static<ResponseConfig['schema']>> | Static<ResponseConfig['schema']>,
+        ...args: [...RequestConfigsToTypes<TRequestSchema, RequestConfigs>, ...any[]]
+    ) => Promise<Static<ResponseConfig['schema']>>,
 >(
-    config: HttpEndpointDecoratorConfig<S, ResponseConfig, RequestConfigs>
+    config: HttpEndpointDecoratorConfig<TRequestSchema, TResponseSchema, ResponseConfig, RequestConfigs>
 ): MethodDecorator<MethodDecoratorType> => {
     const { method, responseCode = 200, path, validate, ...apiOperationOptions } = config;
 

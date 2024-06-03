@@ -1,10 +1,11 @@
 import { BadRequestException, HttpStatus } from '@nestjs/common';
+import { TSchema } from '@sinclair/typebox/type';
 import { ErrorObject } from 'ajv';
 
 import type { ValidatorType } from './types.js';
 
-export class AjvValidationException extends BadRequestException {
-    constructor(type: ValidatorType, errors: Array<ErrorObject> | null | undefined) {
+export class AjvValidationException<TRequestSchema extends TSchema, TResponseSchema extends TSchema> extends BadRequestException {
+    constructor(type: ValidatorType<TRequestSchema, TResponseSchema>, errors: Array<ErrorObject> | null | undefined) {
         const topLevelErrors: ErrorObject[] = [];
         const unionPaths: string[] = [];
 
