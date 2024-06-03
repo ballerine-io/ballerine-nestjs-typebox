@@ -5,9 +5,10 @@ import { extendArrayMetadata } from '@nestjs/common/utils/extend-metadata.util.j
 import { ApiBody, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { DECORATORS } from '@nestjs/swagger/dist/constants.js';
 import { Static, TSchema, Type, TypeGuard } from '@sinclair/typebox';
-import { TypeCompiler } from '@sinclair/typebox/compiler';
+import { Ajv } from 'ajv';
+import fastUri from 'fast-uri';
 
-import { TypeboxValidationException } from './exceptions.js';
+import { AjvValidationException } from './exceptions.js';
 import { TypeboxTransformInterceptor } from './interceptors.js';
 import type {
     HttpEndpointDecoratorConfig,
@@ -22,14 +23,30 @@ import type {
 } from './types.js';
 import { capitalize, coerceType, isObj } from './util.js';
 
+const ajv = new Ajv({
+    coerceTypes: 'array',
+    useDefaults: true,
+    removeAdditional: true,
+    uriResolver: fastUri,
+    addUsedSchema: false,
+    // Explicitly set allErrors to `false`.
+    // When set to `true`, a DoS attack is possible.
+    allErrors: false,
+});
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isSchemaValidator(type: any): type is SchemaValidator {
     return type && typeof type === 'object' && typeof type.validate === 'function';
 }
 
-export function buildSchemaValidator(config: SchemaValidatorConfig): SchemaValidator {
-    const { type, schema, coerceTypes, stripUnknownProps, name, required } = config;
-
+export function buildSchemaValidator<TTSchema extends TSchema>({
+    type,
+    schema,
+    coerceTypes,
+    stripUnknownProps,
+    name,
+    required,
+}: SchemaValidatorConfig<TTSchema>): SchemaValidator<TTSchema> {
     if (!type) {
         throw new Error('Validator missing "type".');
     }
@@ -42,12 +59,12 @@ export function buildSchemaValidator(config: SchemaValidatorConfig): SchemaValid
         throw new Error(`Validator "${name}" expects a TypeBox schema.`);
     }
 
-    const checker = TypeCompiler.Compile(schema);
+    const check = ajv.compile<Static<TTSchema>>(schema);
 
     return {
         schema,
         name,
-        check: checker.Check,
+        check,
         validate(dataOrArray: unknown) {
             let jsonSchema: Obj;
             let processedDataOrArray = dataOrArray;
@@ -101,8 +118,8 @@ export function buildSchemaValidator(config: SchemaValidatorConfig): SchemaValid
                 return;
             }
 
-            if (checker.Check(processedDataOrArray)) return processedDataOrArray;
-            throw new TypeboxValidationException(type, checker.Errors(processedDataOrArray));
+            if (check(processedDataOrArray)) return processedDataOrArray;
+            throw new AjvValidationException(type, check.errors);
         },
     };
 }
