@@ -5,7 +5,7 @@ import { extendArrayMetadata } from '@nestjs/common/utils/extend-metadata.util.j
 import { ApiBody, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { DECORATORS } from '@nestjs/swagger/dist/constants.js';
 import { Static, TSchema, Type, TypeGuard } from '@sinclair/typebox';
-import { Ajv } from 'ajv';
+import Ajv from 'ajv';
 import fastUri from 'fast-uri';
 
 import { AjvValidationException } from './exceptions.js';
