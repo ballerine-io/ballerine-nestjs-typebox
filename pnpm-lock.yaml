@@ -8,6 +8,9 @@ dependencies:
   ajv:
     specifier: ^8.14.0
     version: 8.14.0
+  ajv-formats:
+    specifier: ^2.1.1
+    version: 2.1.1(ajv@8.14.0)
   fast-uri:
     specifier: ^2.3.0
     version: 2.3.0
@@ -26,8 +29,8 @@ devDependencies:
     specifier: ^7.1.1
     version: 7.3.1(@nestjs/common@10.3.8)(@nestjs/core@10.3.8)(reflect-metadata@0.2.2)
   '@sinclair/typebox':
-    specifier: ^0.32.4
-    version: 0.32.31
+    specifier: 0.32.15
+    version: 0.32.15
   '@types/node':
     specifier: ^20.4.1
     version: 20.13.0
@@ -517,8 +520,8 @@ packages:
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
     dev: true
 
-  /@sinclair/typebox@0.32.31:
-    resolution: {integrity: sha512-rYB0tgGHawpom3ZwwsGidvI0NI+W/rRHu1dyyO1KlIoH8iMdg3esSnYQxQtyJ8eflhqxmzEV7Nu8zT4JY7CHKw==}
+  /@sinclair/typebox@0.32.15:
+    resolution: {integrity: sha512-5Lrwo7VOiWEBJBhHmqNmf3TPB9ll8gcEshvYJyAIJyCZ2PF48MFOtiDHJNj8+FsNcqImaQYmxVkKBCBlyAa/wg==}
     dev: true
 
   /@types/json-schema@7.0.15:
@@ -700,6 +703,17 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
     dev: true
+
+  /ajv-formats@2.1.1(ajv@8.14.0):
+    resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
+    peerDependencies:
+      ajv: ^8.0.0
+    peerDependenciesMeta:
+      ajv:
+        optional: true
+    dependencies:
+      ajv: 8.14.0
+    dev: false
 
   /ajv@6.12.6:
     resolution: {integrity: sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g==}
