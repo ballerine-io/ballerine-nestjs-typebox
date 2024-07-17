@@ -23,7 +23,6 @@ import type {
 import { capitalize, coerceType, isObj } from './util.js';
 
 import AjvFormats from 'ajv-formats';
-import { ajvOptions } from './ajv-options.js';
 
 const ajv = new Ajv({
     coerceTypes: 'array',
@@ -36,7 +35,7 @@ const ajv = new Ajv({
     allErrors: false,
 
     // Our custom options:
-    ...ajvOptions,
+    keywords: ['transform'],
 });
 
 AjvFormats.default(ajv);

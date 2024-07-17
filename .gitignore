@@ -13,6 +13,7 @@ lerna-debug.log*
 
 # OS
 .DS_Store
+temp_auto_push.bat
 
 # Tests
 coverage
@@ -27,10 +28,7 @@ coverage
 *.sublime-workspace
 
 # IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
 
 *.tgz
+.gitignore
+branch_structure.json
