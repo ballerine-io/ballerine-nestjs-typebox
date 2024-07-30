@@ -6,7 +6,9 @@ import { ApiBody, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { DECORATORS } from '@nestjs/swagger/dist/constants.js';
 import { Static, TSchema, Type, TypeGuard } from '@sinclair/typebox';
 import Ajv from 'ajv';
+import AjvFormats from 'ajv-formats';
 import fastUri from 'fast-uri';
+
 import { AjvValidationException } from './exceptions.js';
 import { TypeboxTransformInterceptor } from './interceptors.js';
 import type {
@@ -22,8 +24,6 @@ import type {
 } from './types.js';
 import { capitalize, coerceType, isObj } from './util.js';
 
-import AjvFormats from 'ajv-formats';
-
 const ajv = new Ajv({
     coerceTypes: 'array',
     useDefaults: true,
@@ -35,7 +35,7 @@ const ajv = new Ajv({
     allErrors: false,
 
     // Our custom options:
-    keywords: ['transform'],
+    keywords: ['transform', 'example'],
 });
 
 AjvFormats.default(ajv);
