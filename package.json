@@ -1,6 +1,6 @@
 {
     "name": "ballerine-nestjs-typebox",
-    "version": "3.0.2-next.10",
+    "version": "3.0.2-next.11",
     "description": "",
     "author": "Andrew Smiley <jayalfredprufrock@gmail.com>",
     "license": "MIT",
@@ -25,7 +25,7 @@
         "@nestjs/common": "^9.0.1 || ^10.0.3",
         "@nestjs/core": "^9.0.1 || ^10.0.3",
         "@nestjs/swagger": "^6.1.1 || ^7.0.11",
-        "@sinclair/typebox": "^0.32.4",
+        "@sinclair/typebox": "0.32.15",
         "ajv": "^8.14.0",
         "ajv-formats": "^2.1.1",
         "rxjs": "^7.5.6"
