@@ -13,7 +13,6 @@ lerna-debug.log*
 
 # OS
 .DS_Store
-temp_auto_push.bat
 
 # Tests
 coverage
@@ -30,5 +29,3 @@ coverage
 # IDE - VSCode
 
 *.tgz
-.gitignore
-branch_structure.json
